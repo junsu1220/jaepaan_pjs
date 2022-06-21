@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+            rel="stylesheet"
+            href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+            integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+            crossorigin="anonymous"
+    />
+    <link href="{{ url_for('static', filename='index.css') }}" rel="stylesheet">
+
+    <!-- JS -->
+    <script
+            src="https://code.jquery.com/jquery-3.6.0.js"
+            integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+
+    <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+            integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+            crossorigin="anonymous"
+    ></script>
+
+    <!-- 구글폰트 -->
+    <link
+            href="https://fonts.googleapis.com/css?family=Hahmlet:wght@900&Stylish&display=swap"
+            rel="stylesheet"
+    />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paginationjs/2.1.4/pagination.min.js"></script>
+    <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/paginationjs/2.1.4/pagination.css"
+    />
+
+    <title>재판하는 존경장님</title>
+
+    <style>
+        .allListTextCopy {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+
+</head>
+
+<body>
+<div class="background">
+    <div class="sign">
+        <div class="logo">
+            <img src="../static/title_white.png">
+        </div>
+        <div class="username">어서오세요, {{ id }} 존경장님
+            <div class="navBtns">
+                <button class="logoutBtn btn btn-outline-light" type="button" onclick="window.location.href = '/'">메인페이지
+                </button>
+                <button class="logoutBtn btn btn-outline-light" type="button" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="title_mypage">나의 재판 이력</div>
+        <div class="buttons">
+            <button
+                    type="button"
+                    class="btn btn-light btn-lg btn-block"
+                    id="myJudge"
+                    style="border: 1px solid black; margin-top: 0;"
+            >
+                나의 재판📂
+            </button>
+            <button
+                    type="button"
+                    class="btn btn-dark btn-lg btn-block"
+                    id="myComment"
+                    style="margin-top: 0px;"
+            >
+                나의 댓글️💬
+            </button>
+        </div>
+
+        <div class="list-all">
+            <div class="newList">
+                <ul class="list-group">
+                    <div id="pagination">
+                        <!--페이지 리스트 만들기-->
+                        {% for post in posts|reverse %}
+                            <div class="clickPost" onclick="onClickPost('{{ post._id }}')">
+                                <!--첫번째 페이지는 d-flex-->
+                                <!-- loop.index0//page_size 는 게시물의 페이지 번호-1 -->
+                                {% if loop.index0//page_size == 0 %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center"
+                                        value={{ loop.index0//page_size }}>
+                                        <p class="allListTextCopy">{{ post.title }}</p>
+                                        <span class="badge badge-primary badge-pill">{{ post.like }}</span>
+                                    </li>
+                                <!--나머지 페이지는 d-none-->
+                                {% else %}
+                                    <li class="list-group-item d-none justify-content-between align-items-center"
+                                        value={{ loop.index0//page_size }}>
+                                        <p class="allListTextCopy">{{ post.title }}</p>
+                                        <span class="badge badge-primary badge-pill">{{ post.like }}</span>
+                                    </li>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        <nav aria-label="Page navigation example">
+                            <ul class="pagination post-pagination justify-content-center">
+                                <!--앞으로 버튼-->
+                                <li class="page-item">
+                                    <a class="page-link previous-page-link" onclick="previousPage()">
+                                        <span aria-hidden="true">&laquo;</span>
+                                        <span class="sr-only">Previous</span>
+                                    </a>
+                                </li>
+                                <!--페이지 버튼 만들기-->
+                                <!-- 페이지 사이즈로 나눴을 때 딱맞아 떨어지면 그 수만큼 반복, 그렇지 않으면 +1 반복 -->
+                                {% if (posts|length)%page_size == 0 %}
+                                    {% for x in range((posts|length)//page_size) %}
+                                        <!--첫번째 버튼-->
+                                        {% if x == 0 %}
+                                            <li class="page-item active">
+                                                <a class="page-link" value={{ x }} onclick="post_page('{{ x }}')">
+                                                    {{ x+1 }}</a>
+                                            </li>
+                                        <!--나머지 버튼-->
+                                        {% else %}
+                                            <li class="page-item">
+                                                <a class="page-link" value={{ x }} onclick="post_page('{{ x }}')">
+                                                    {{ x+1 }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    {% for x in range((posts|length)//page_size + 1) %}
+                                        {% if x == 0 %}
+                                            <li class="page-item active">
+                                                <a class="page-link" value={{ x }} onclick="post_page('{{ x }}')">
+                                                    {{ x+1 }}</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item">
+                                                <a class="page-link" value={{ x }} onclick="post_page('{{ x }}')">
+                                                    {{ x+1 }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                                <!--다음 페이지-->
+                                <li class="page-item">
+                                    <a class="page-link next-page-link" onclick="nextPage()">
+                                        <span aria-hidden="true">&raquo;</span>
+                                        <span class="sr-only">Next</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+
+                    <div id="pagination_comment" style="display: None">
+                        {% for comment in comments|reverse %}
+                            {% if loop.index0//page_size == 0 %}
+                                <div class="clickComment" onclick="onClickPost('{{ comment.post_id }}')">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center"
+                                        value={{ loop.index0//page_size }}>
+                                        <p class="allListTextCopy">{{ comment.comment | safe }}</p>
+                                        <p class="allListTextCopy">{{ comment.post_title }}</p>
+                                    </li>
+                                </div>
+                            {% else %}
+                                <div class="clickComment" onclick="onClickPost('{{ comment.post_id }}')">
+                                    <li class="list-group-item d-none justify-content-between align-items-center"
+                                        value={{ loop.index0//page_size }}>
+                                        <p class="allListTextCopy">{{ comment.comment }}</p>
+                                        <p class="allListTextCopy">{{ comment.post_title }}</p>
+                                    </li>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        <nav aria-label="Page navigation example">
+                            <ul class="pagination comment-pagination justify-content-center">
+                                <li class="page-item">
+                                    <a class="page-link previous-page-link" onclick="previousCommentPage()">
+                                        <span aria-hidden="true">&laquo;</span>
+                                        <span class="sr-only">Previous</span>
+                                    </a>
+                                </li>
+
+                                {% if (comments|length)%page_size == 0 %}
+                                    {% for x in range((comments|length)//page_size) %}
+                                        {% if x == 0 %}
+                                            <li class="page-item active">
+                                                <a class="page-link" value={{ x }} onclick="comment_page('{{ x }}')">
+                                                    {{ x+1 }}</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item">
+                                                <a class="page-link" value={{ x }} onclick="comment_page('{{ x }}')">
+                                                    {{ x+1 }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    {% for x in range((comments|length)//page_size + 1) %}
+                                        {% if x == 0 %}
+                                            <li class="page-item active">
+                                                <a class="page-link" value={{ x }} onclick="comment_page('{{ x }}')">
+                                                    {{ x+1 }}</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item">
+                                                <a class="page-link" value={{ x }} onclick="comment_page('{{ x }}')">
+                                                    {{ x+1 }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                                <li class="page-item">
+                                    <a class="page-link next-page-link" onclick="nextCommentPage()">
+                                        <span aria-hidden="true">&raquo;</span>
+                                        <span class="sr-only">Next</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+
+                    <div id="demo"></div>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const userId = '{{ id }}';
+
+    //로그인 했을 경우
+    if (userId) {
+        $('.username').css('display', 'flex');
+        $('.logoutBtn').css('display', 'flex');
+    }
+
+    // 로그아웃
+    function logout() {
+        $.removeCookie('mytoken', {path: '/'});
+        window.location.href = "/"
+    }
+
+    // 페이지네이션 클릭 이벤트
+    function post_page(num) {
+        $('.clickPost > .list-group-item').removeClass('d-flex').addClass('d-none');
+        $(".clickPost > .list-group-item[value = " + num + "]").removeClass('d-none').addClass('d-flex');
+        $(".post-pagination > .page-item").removeClass('active');
+        $(".post-pagination > .page-item > .page-link[value = " + num + "]").parent('.page-item').addClass('active');
+    }
+
+    // 다음 페이지
+    function nextPage() {
+        let nextPage = $(".post-pagination > .active").children('a').attr('value') * 1 + 1;
+        let max = $(".post-pagination > .page-item").length - 2
+
+        if (nextPage < max) {
+            $('.clickPost > .list-group-item').removeClass('d-flex').addClass('d-none');
+            $(".clickPost > .list-group-item[value = " + nextPage + "]").removeClass('d-none').addClass('d-flex');
+            $(".post-pagination > .page-item").removeClass('active');
+            $(".post-pagination > .page-item > .page-link[value = " + nextPage + "]").parent('.page-item').addClass('active');
+        }
+    }
+
+    // 이전 페이지
+    function previousPage() {
+        let previousPage = $(".post-pagination > .active").children('a').attr('value') * 1 - 1;
+
+        if (previousPage >= 0) {
+            $('.clickPost > .list-group-item').removeClass('d-flex').addClass('d-none');
+            $(".clickPost > .list-group-item[value = " + previousPage + "]").removeClass('d-none').addClass('d-flex');
+            $(".post-pagination > .page-item").removeClass('active');
+            $(".post-pagination > .page-item > .page-link[value = " + previousPage + "]").parent('.page-item').addClass('active');
+        }
+    }
+
+    // 페이지네이션 클릭 이벤트 (댓글)
+    function comment_page(num) {
+        $('.clickComment > .list-group-item').removeClass('d-flex').addClass('d-none');
+        $(".clickComment > .list-group-item[value = " + num + "]").removeClass('d-none').addClass('d-flex');
+        $(".comment-pagination > .page-item").removeClass('active');
+        $(".comment-pagination > .page-item > .page-link[value = " + num + "]").parent('.page-item').addClass('active');
+    }
+
+    // 다음 페이지 (댓글)
+    function nextCommentPage() {
+        let nextPage = $(".comment-pagination > .active").children('a').attr('value') * 1 + 1;
+        let max = $(".comment-pagination > .page-item").length - 2
+
+        if (nextPage < max) {
+            $('.clickComment > .list-group-item').removeClass('d-flex').addClass('d-none');
+            $(".clickComment > .list-group-item[value = " + nextPage + "]").removeClass('d-none').addClass('d-flex');
+            $(".comment-pagination > .page-item").removeClass('active');
+            $(".comment-pagination > .page-item > .page-link[value = " + nextPage + "]").parent('.page-item').addClass('active');
+        }
+
+    }
+
+    // 이전 페이지 (댓글)
+    function previousCommentPage() {
+        let previousPage = $(".comment-pagination > .active").children('a').attr('value') * 1 - 1;
+
+        if (previousPage >= 0) {
+            $('.clickComment > .list-group-item').removeClass('d-flex').addClass('d-none');
+            $(".clickComment > .list-group-item[value = " + previousPage + "]").removeClass('d-none').addClass('d-flex');
+            $(".comment-pagination > .page-item").removeClass('active');
+            $(".comment-pagination > .page-item > .page-link[value = " + previousPage + "]").parent('.page-item').addClass('active');
+        }
+    }
+
+    // 조회수 늘리기
+    function onClickPost(id) {
+
+        $.ajax({
+            type: 'POST',
+            url: '/view',
+            async: false,
+            data:
+                {
+                    post_id: id
+                },
+            success: function (response) {
+                window.location.href = `/post?post_id=${id}`
+            }
+        })
+    }
+
+    //나의 재판
+    $("#myJudge").click(function () {
+        $("#pagination").show();
+        $("#pagination_comment").hide();
+        post_page(0);
+    });
+
+    //나의 댓글
+    $("#myComment").click(function () {
+        $("#pagination").hide();
+        $("#pagination_comment").show();
+        comment_page(0);
+    });
+
+</script>
+</body>
+</html>

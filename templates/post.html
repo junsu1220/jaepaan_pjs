@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <!-- kakaotalk meta tag -->
+    <meta property="og:url" content="http://starandnight.shop" />
+    <meta
+      property="og:image"
+      content="https://user-images.githubusercontent.com/84619866/133743855-03d1d3cd-b89c-409a-92fe-9aeb455c75a5.png"
+    />
+    <meta property="og:description" content="너의 고민, 우리가 재판해주지!" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="재판하는 존경장님" />
+
+    <title>고민 글 상세내용</title>
+
+    <!-- Bulma CSS 링크 -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css"
+    />
+
+    <!-- 구글 웹 폰트 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jua&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Ajax CDN -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    <!-- static CSS file load -->
+    <link rel="stylesheet" type="text/css" href="/static/post.css" />
+
+    <script>
+      // 공감 버튼 눌렀을 때의 이벤트
+      function PushLikeButton() {
+        let button_value = $("#LikeButton").val().split(" ");
+        let button_action = button_value[0];
+        let button_id = button_value[1];
+
+        console.log(button_action, button_id);
+
+        $.ajax({
+          type: "POST",
+          url: "/like",
+          data: { post_id: button_id, action: button_action },
+          success: function (response) {
+            console.log(response["msg"]);
+            $("#LikeDiv").load(window.location.href + " #LikeDiv");
+            $("#ArticleInfo").load(window.location.href + " #ArticleInfo");
+          },
+        });
+      }
+
+      // 비공감 버튼 이벤트
+      function PushUnLikeButton() {
+        let button_value = $("#UnLikeButton").val().split(" ");
+        let button_action = button_value[0];
+        let button_id = button_value[1];
+
+        console.log(button_action, button_id);
+        $.ajax({
+          type: "POST",
+          url: "/like",
+          data: { post_id: button_id, action: button_action },
+          success: function (response) {
+            console.log(response["msg"]);
+            $("#LikeDiv").load(window.location.href + " #LikeDiv");
+            $("#ArticleInfo").load(window.location.href + " #ArticleInfo");
+          },
+        });
+      }
+
+      //
+      function XSSCheck(str, level) {
+        if (level == undefined || level == 0) {
+          str = str.replace(/\<|\>|\"|\'|\%|\;|\(|\)|\&|\+|\-/g, "");
+        } else if (level != undefined && level == 1) {
+          str = str.replace(/\</g, "&lt;");
+          str = str.replace(/\>/g, "&gt;");
+        }
+        return str;
+      }
+
+      // 댓글 작성버튼에 대한 이벤트
+      function PostReplyButton() {
+        let reply_temp = $("#ReplyComment").val();
+        const reply = XSSCheck(reply_temp, 0);
+        let button_value = $("#ReplyButton").val();
+        let Today = TodayDate();
+
+        console.log(reply, button_value, Today);
+
+        if (reply != "") {
+          $.ajax({
+            type: "POST",
+            url: "/comment",
+            data: { post_id: button_value, comment: reply, create_date: Today },
+            success: function (response) {
+              console.log(response["msg"]);
+              $("#ReplyComment").val("");
+              $("#ReplyDiv").load(window.location.href + " #ReplyDiv");
+            },
+          });
+        } else {
+          alert("댓글을 입력하세요.");
+        }
+      }
+
+      // 댓글 삭제 이벤트
+      function DeleteReply(CommentID) {
+        if (confirm("댓글을 삭제하시겠습니까?") == true) {
+          let PostID = "{{ post._id }}";
+
+          console.log(CommentID, PostID);
+
+          $.ajax({
+            type: "DELETE",
+            url: "/comment",
+            data: { post_id: PostID, comment_id: CommentID },
+            success: function (response) {
+              alert(response["msg"]);
+              $("#ReplyDiv").load(window.location.href + " #ReplyDiv");
+            },
+            error: function (e) {
+              alert(e.responseText);
+            },
+          });
+        } else {
+          return;
+        }
+      }
+
+      // yyyy-mm-dd 형식 만들기
+      function TodayDate() {
+        var date = new Date();
+
+        // 년,월,일
+        var year = date.getFullYear();
+        var month = ("0" + (1 + date.getMonth())).slice(-2);
+        var day = ("0" + date.getDate()).slice(-2);
+
+        // 시간, 분, 초
+        var hour = ("0" + date.getHours()).slice(-2);
+        var minute = ("0" + date.getMinutes()).slice(-2);
+        var second = ("0" + date.getSeconds()).slice(-2);
+
+        return (
+          year +
+          "-" +
+          month +
+          "-" +
+          day +
+          " " +
+          hour +
+          ":" +
+          minute +
+          ":" +
+          second
+        );
+      }
+
+      // 게시글 삭제 이벤트
+      function DeletePost() {
+        if (confirm("글을 삭제하시겠습니까?") == true) {
+          let PostID = $("#DeletePost").val();
+          console.log(PostID);
+
+          $.ajax({
+            type: "DELETE",
+            url: "/post",
+            data: { post_id: PostID },
+            success: function (response) {
+              console.log(response["msg"]);
+              alert("게시글이 삭제되었습니다.");
+              window.location.href = "/";
+            },
+            error: function (request) {
+              if (request.status == 403) {
+                alert("권한이 없습니다.");
+              }
+            },
+          });
+        } else {
+          return;
+        }
+      }
+
+      // 게시글 수정 이벤트
+      function EditPostButton() {
+        let login_user = "{{ user_id }}";
+        let author = "{{ post.user_id }}";
+
+        if (login_user == author) {
+          if (confirm("재판 글을 수정하시겠습니까?")) {
+            window.location.href = "/post/update?post_id={{ post._id }}";
+          } else {
+            return;
+          }
+        } else {
+          alert("해당 글에 대한 권한이 없습니다.");
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div>
+      <section class="hero is-small is-primary" style="background: black">
+        <div class="hero-body">
+          <!-- 재판실로 돌아가는 버튼 -->
+          <div class="toMainBtn">
+            <button
+              class="button is-link"
+              onclick="window.location.href = '/'; "
+            >
+              재판실로 돌아가기
+            </button>
+          </div>
+          <!-- 재판 글 배너 -->
+          <div>
+            <div class="post_title_div">
+              <span class="top_banner_title post_title">재판 글</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      <div class="page">
+        <div class="whole_post_page">
+          <div class="article">
+            <!-- 글 정보 -->
+            <div class="article_info" id="ArticleInfo">
+              <div class="article_author">
+                <span>글쓴이: <strong>{{ post.user_id }}</strong></span>
+              </div>
+              <div class="article_data">
+                {% set date = (post.postDate | string).split(' ') %} {% set
+                today = date[1].split(':') %}
+                <span>{{ date[0] }} {{ today[0] }}:{{ today[1] }}</span>
+              </div>
+              <div class="article_hit">
+                <span
+                  >조회: <strong>{{ post.view }}</strong> &nbsp;&nbsp;&nbsp;
+                  추천: <strong>{{ like_count }}</strong></span
+                >
+              </div>
+            </div>
+
+            <!-- 글 제목 -->
+            <div class="article-title">
+              <div class="title-text">{{ post.title }}</div>
+              <hr />
+            </div>
+
+            <!-- 글 상세내용 입니다 -->
+            <div class="article-content">{{ post.content | safe }}</div>
+            <hr />
+
+            <!-- 재판 수정, 재판 삭제 -->
+            <div class="delete-edit-div">
+              <div class="delete-edit">
+                <button
+                  class="button is-warning edit-button"
+                  onclick="EditPostButton()"
+                >
+                  <span><strong>재판 수정</strong></span>
+                </button>
+                <button
+                  class="button is-danger"
+                  onclick="DeletePost()"
+                  value="{{ post._id }}"
+                  id="DeletePost"
+                >
+                  <span class="delete-button-text"
+                    ><strong>재판 삭제</strong></span
+                  >
+                </button>
+              </div>
+            </div>
+
+            <!-- 공감 비공감 입니다 ------------------------------------------->
+            <div class="Like-Unlike">
+              <div class="Like-Unlike-div">
+                <button
+                  class="LikeButton-border"
+                  onclick="PushLikeButton()"
+                  value="like {{ post._id }}"
+                  id="LikeButton"
+                >
+                  <img src="/static/good_thumb.png" class="LikeButton-image" />
+                </button>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <button
+                  class="UnlikeButton-border"
+                  onclick="PushUnLikeButton()"
+                  id="UnLikeButton"
+                  value="unlike {{ post._id }}"
+                >
+                  <img src="/static/bad_thumb.png" class="UnlikeButton-image" />
+                </button>
+
+                <!-- 공감 비공감 텍스트입니다 -->
+                <div id="LikeDiv" class="Like-div">
+                  <div class="Like">공감 : {{ like_count }}</div>
+                  <div class="Unlike">비공감 : {{ unlike_count }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 댓글 리스트 입니다 -->
+            <div class="reply-list" id="ReplyDiv">
+              <p>댓글 수 : <strong> {{ comments | length }}</strong></p>
+              <hr />
+              <div>
+                <ul class="reply-ul" id="ReplyList">
+                  {% for comment in comments %}
+                  <li class="reply-data">
+                    <div style="height: 35px">
+                      <div class="reply-userid-div">
+                        <span class="reply-userid">
+                          {{ comment.user_id }}
+                        </span>
+                        <span class="reply-comment-date">
+                          &nbsp;({{ comment.create_date }})
+                        </span>
+                      </div>
+                      <div class="reply-delete-div">
+                        <button
+                          class="button is-light"
+                          onclick="DeleteReply(this.value)"
+                          id="Comment_number"
+                          value="{{ comment._id }}"
+                        >
+                          <span class="reply-delete-font">
+                            <strong>삭제</strong>
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                    <div>{{ comment.comment | safe }}</div>
+                    <hr />
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+
+            <!--  댓글 달기  -->
+            <article class="media">
+              <div class="media-content">
+                <div class="field">
+                  <p class="control">
+                    <textarea
+                      rows="3"
+                      class="textarea"
+                      placeholder="댓글을 달아주세요!"
+                      id="ReplyComment"
+                    ></textarea>
+                  </p>
+                </div>
+                <nav class="level">
+                  <div class="level-left">
+                    <div class="level-item">
+                      <button
+                        class="button is-info"
+                        onclick="PostReplyButton()"
+                        value="{{ post._id }}"
+                        id="ReplyButton"
+                      >
+                        댓글 작성
+                      </button>
+                    </div>
+                  </div>
+                </nav>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
